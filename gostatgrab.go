@@ -1,7 +1,7 @@
 // Copyright 2012 Scott Dunlop. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
-package gostatgrab 
+package gostatgrab
 
 /*  
 #cgo pkg-config: libstatgrab
@@ -45,6 +45,8 @@ func (err *Error) Error() string {
     return C.GoString(C.sg_str_error(C.sg_error(err.Errno)))
 }
 
+// Shutdown ensures that any descriptors opened when gostatgrab was imported 
+// are properly closed.
 func Shutdown() error {
     if C.sg_shutdown() != 0 {
         return getError()
@@ -52,6 +54,7 @@ func Shutdown() error {
     return nil
 }
 
+// GetCpuStats extracts the current CPU info from the system as ticks, see sg_get_cpu_stats(3).
 func GetCpuStats() (*CpuStats, error) {
     c := C.sg_get_cpu_stats()
     return &CpuStats{
@@ -67,18 +70,17 @@ func GetCpuStats() (*CpuStats, error) {
 }
 
 type CpuStats struct {
-    User    int64
-    Kernel  int64
-    Idle    int64
-    Iowait  int64
-    Swap    int64
-    Nice    int64
-    Total   int64
-    Systime time.Time
+    User    int64     // number of ticks spent in user state
+    Kernel  int64     // number of ticks spent in kernel state
+    Idle    int64     // number of ticks spent in idle state
+    Iowait  int64     // number of ticks spent in iowait state
+    Swap    int64     // number of ticks spent in swap state
+    Nice    int64     // number of ticks spent in nice state
+    Total   int64     // total number of ticks spent
+    Systime time.Time // current system time
 }
 
-//TODO: thread-safety by massive mutex
-
+// GetCpuPercents extracts the current CPU info from the system as percentages, see sg_get_cpu_percents(3).
 func GetCpuPercents() (*CpuPercents, error) {
     c := C.sg_get_cpu_percents()
     if c == nil {
@@ -91,20 +93,21 @@ func GetCpuPercents() (*CpuPercents, error) {
         float32(c.iowait),
         float32(c.swap),
         float32(c.nice),
-        time.Unix(int64(c.time_taken), 0)}, nil
+        time.Duration(int64(c.time_taken)) * time.Second}, nil
     // WARNING: modern unixes only; will horribly confuse your PDP.
 }
 
 type CpuPercents struct {
-    User    float32
-    Kernel  float32
-    Idle    float32
-    Iowait  float32
-    Swap    float32
-    Nice    float32
-    Systime time.Time
+    User    float32       // percentage of time spent in user state
+    Kernel  float32       // percentage of time spent in kernel state
+    Idle    float32       // percentage of time spent in idle state
+    Iowait  float32       // percentage of time spent in iowait state
+    Swap    float32       // percentage of time spent in swap state
+    Nice    float32       // percentage of time spent in nice state
+    Systime time.Duration // time since the last call to this API
 }
 
+// GetDiskIoStats returns information about I/O transfers since boot for all disks, see sg_get_disk_io_stats(3).
 func GetDiskIoStats() ([]*DiskIoStats, error) {
     var ct C.int
     c := C.sg_get_disk_io_stats(&ct)
@@ -114,6 +117,7 @@ func GetDiskIoStats() ([]*DiskIoStats, error) {
     return asDiskIoStatsArray(c, int(ct)), nil
 }
 
+// GetDiskIoStatsDiff returns information about I/O transfers the last call for all disks, see sg_get_disk_io_stats_diff(3).
 func GetDiskIoStatsDiff() ([]*DiskIoStats, error) {
     var ct C.int
     c := C.sg_get_disk_io_stats_diff(&ct)
@@ -143,6 +147,7 @@ type DiskIoStats struct {
     Systime    time.Time
 }
 
+// GetMemStats returns capacity and usage information about system memory, see sg_get_mem_stats(3).
 func GetMemStats() (*MemStats, error) {
     c := C.sg_get_mem_stats()
     if c == nil {
@@ -162,6 +167,7 @@ type MemStats struct {
     Cache int64
 }
 
+// GetSwapStats returns capacity and usage information about system swap, see sg_get_swap_stats(3).
 func GetSwapStats() (*SwapStats, error) {
     c := C.sg_get_swap_stats()
     if c == nil {
@@ -179,6 +185,7 @@ type SwapStats struct {
     Used  int64
 }
 
+// GetFsStats returns information about mounted filesystems; see sg_get_fs_stats(3).
 func GetFsStats() ([]*FsStats, error) {
     var ct C.int
     c := C.sg_get_fs_stats(&ct)
@@ -215,24 +222,25 @@ func asFsStatsArray(d *C.sg_fs_stats, ct int) []*FsStats {
 }
 
 type FsStats struct {
-    DeviceName  string
-    FsType      string
-    MntPoint    string
-    Size        int64
-    Used        int64
-    Avail       int64
-    TotalInodes int64
-    UsedInodes  int64
-    FreeInodes  int64
-    AvailInodes int64
-    IoSize      int64
-    BlockSize   int64
-    TotalBlocks int64
-    FreeBlocks  int64
-    UsedBlocks  int64
-    AvailBlocks int64
+    DeviceName  string // the name of the device, as mounted
+    FsType      string // the filesystem type (frequently misreported as "ext2" in Linux)
+    MntPoint    string // where the filesystem is mounted
+    Size        int64  // the size of the filesystem in bytes
+    Used        int64  // the number of bytes used in the filesystem
+    Avail       int64  // the number of bytes available for use
+    TotalInodes int64  // the number of inodes in the filesystem
+    UsedInodes  int64  // the number of inodes used by the filesystem
+    FreeInodes  int64  // the number of free inodes, may be different from avail.
+    AvailInodes int64  // the number of inodes available for use
+    IoSize      int64  // the optimal size of a block for I/O
+    BlockSize   int64  // the size of a block in the filesystem
+    TotalBlocks int64  // the total number of blocks in the filesystem
+    FreeBlocks  int64  // the number of blocks unused in the filesystem
+    UsedBlocks  int64  // the number of blocks used in the filesystem
+    AvailBlocks int64  // the number of blocks available to the filesystem
 }
 
+// GetHostInfo returns host identifying information; see sg_get_host_info(3).
 func GetHostInfo() (*HostInfo, error) {
     c := C.sg_get_host_info()
     if c == nil {
@@ -248,14 +256,15 @@ func GetHostInfo() (*HostInfo, error) {
 }
 
 type HostInfo struct {
-    OsName    string
-    OsRelease string
-    OsVersion string
-    Platform  string
-    Hostname  string
-    Uptime    time.Duration
+    OsName    string        // equivalent to "uname -s"
+    OsRelease string        // equivalent to "uname -r"
+    OsVersion string        // equivalent to "uname -v"
+    Platform  string        // equivalent to "uname -m"
+    Hostname  string        // equivalent to "hostname"
+    Uptime    time.Duration // time since last boot
 }
 
+// GetProcessStats returns process information similar to that found in ps(1); see sg_get_process_stats.
 func GetProcessStats() ([]*ProcessStats, error) {
     var ct C.int
     c := C.sg_get_process_stats(&ct)
@@ -291,33 +300,34 @@ func asProcessStatsArray(d *C.sg_process_stats, ct int) []*ProcessStats {
 }
 
 type ProcessStats struct {
-    ProcessName  string
-    ProcessTitle string
-    Pid          int64
-    Parent       int64
-    Pgid         int64
-    Uid          int64
-    Euid         int64
-    Gid          int64
-    Egid         int64
-    ProcSize     uint64
-    ProcResident uint64
-    TimeSpent    time.Duration
-    CpuPercent   float32
-    Nice         int
-    State        ProcessState
+    ProcessName  string        // the name of the command
+    ProcessTitle string        // the cmdline of the command (process-controlled)
+    Pid          int64         // the process id
+    Parent       int64         // the parent process id
+    Pgid         int64         // the process group leader id
+    Uid          int64         // the user id
+    Euid         int64         // the effective user id
+    Gid          int64         // the group id
+    Egid         int64         // the efffective group id
+    ProcSize     uint64        // the process size in bytes
+    ProcResident uint64        // the size of the process in memory in bytes
+    TimeSpent    time.Duration // time spent in running state
+    CpuPercent   float32       // current cpu percentage utilized by the process
+    Nice         int           // the "niceness" of the process, see nice(1) and/or nice(2)
+    State        ProcessState  // the state of the process, see ProcessState
 }
 
 type ProcessState int
 
 var (
-    Running      = ProcessState(0)
-    Sleeping     = ProcessState(1)
-    Stopped      = ProcessState(2)
-    Zombie       = ProcessState(3)
-    UnknownState = ProcessState(4)
+    Running      = ProcessState(0) // the process is currently running
+    Sleeping     = ProcessState(1) // the process is sleeping, waiting for an event
+    Stopped      = ProcessState(2) // the process was stopped and must be resumed
+    Zombie       = ProcessState(3) // the process is defunct and needs parent cleanup
+    UnknownState = ProcessState(4) // the process state is not understood by statgrab
 )
 
+// GetProcessCount returns summary counts of processes in various states; see sg_get_process_count(3)
 func GetProcessCount() (*ProcessCount, error) {
     c := C.sg_get_process_count()
     if c == nil {
@@ -332,11 +342,11 @@ func GetProcessCount() (*ProcessCount, error) {
 }
 
 type ProcessCount struct {
-    Total    int
-    Running  int
-    Sleeping int
-    Stopped  int
-    Zombie   int
+    Total    int // total number of processes in the system
+    Running  int // number of processes that are Running
+    Sleeping int // number of processes that are Sleeping
+    Stopped  int // number of processes that are Stopped
+    Zombie   int // number of processes that are Zombies
 }
 
 //TODO sg_get_load_stats
@@ -344,3 +354,5 @@ type ProcessCount struct {
 //TODO sg_get_user_stats
 //TODO sg_get_network_io_stats
 //TODO sg_get_network_iface_stats
+
+//TODO: thread-safety by massive mutex
