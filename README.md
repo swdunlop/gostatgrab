@@ -17,6 +17,8 @@ Gostatgrab uses "go build" as a build system; with a weekly Go installation, as 
 
 An example, jsongrab, demonstrates how to use the API.  On most modern platforms, elevated privileges are not required; on other platforms, Gostatgrab will drop privileges as soon as possible -- once libstatgrab has kicked off its pipe.
 
+Once jsongrab has been read and digested, the rest follows naturally after reading the statgrab(3) manpages.
+
 # Improving Gostatgrab
 
 Please submit any improvements as github pull requests, or if religiously opposed, diffs.  Pull requests tend to be faster, as they are quicker off the block for review time.
