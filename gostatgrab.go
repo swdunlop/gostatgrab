@@ -29,8 +29,6 @@ func init() {
     if C.sg_drop_privileges() != 0 {
         panic(getError())
     }
-    //int sg_snapshot();
-    //int sg_shutdown();
 }
 
 func getError() error {
@@ -57,6 +55,9 @@ func Shutdown() error {
 // GetCpuStats extracts the current CPU info from the system as ticks, see sg_get_cpu_stats(3).
 func GetCpuStats() (*CpuStats, error) {
     c := C.sg_get_cpu_stats()
+    if c == nil {
+        return nil, error
+    }
     return &CpuStats{
         int64(c.user),
         int64(c.kernel),
