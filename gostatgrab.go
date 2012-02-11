@@ -56,7 +56,7 @@ func Shutdown() error {
 func GetCpuStats() (*CpuStats, error) {
     c := C.sg_get_cpu_stats()
     if c == nil {
-        return nil, error
+        return nil, getError()
     }
     return &CpuStats{
         int64(c.user),
