@@ -26,9 +26,10 @@ func init() {
     if C.sg_init() != 0 {
         panic(getError())
     }
-    if C.sg_drop_privileges() != 0 {
-        panic(getError())
-    }
+    //    if C.sg_drop_privileges() != 0 {
+    //        panic(getError())
+    //    }
+    println("done with init")
 }
 
 func getError() error {
