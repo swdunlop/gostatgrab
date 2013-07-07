@@ -23,6 +23,7 @@ func main() {
     defer os.Stderr.Sync()
     printResult(gostatgrab.GetCpuPercents())
     printResult(gostatgrab.GetDiskIoStats())
+    printResult(gostatgrab.GetNetworkIoStats())
     printResult(gostatgrab.GetMemStats())
     printResult(gostatgrab.GetSwapStats())
     printResult(gostatgrab.GetFsStats())
