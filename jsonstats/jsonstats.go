@@ -3,7 +3,7 @@ package main
 import (
     "encoding/json"
     "os"
-    "github.com/swdunlop/gostatgrab"
+	".."
 )
 
 var outp *json.Encoder = json.NewEncoder(os.Stdout)

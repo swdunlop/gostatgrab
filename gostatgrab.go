@@ -69,19 +69,19 @@ func GetCpuStats() (*CpuStats, error) {
 		int64(c.swap),
 		int64(c.nice),
 		int64(c.total),
-		time.Unix(int64(c.systime), 0)}, nil
+		time.Duration(time.Duration(c.systime) * time.Second)}, nil
 	// WARNING: modern unixes only; will horribly confuse your PDP.
 }
 
 type CpuStats struct {
-	User    int64     // number of ticks spent in user state
-	Kernel  int64     // number of ticks spent in kernel state
-	Idle    int64     // number of ticks spent in idle state
-	Iowait  int64     // number of ticks spent in iowait state
-	Swap    int64     // number of ticks spent in swap state
-	Nice    int64     // number of ticks spent in nice state
-	Total   int64     // total number of ticks spent
-	Systime time.Time // current system time
+	User    int64         // number of ticks spent in user state
+	Kernel  int64         // number of ticks spent in kernel state
+	Idle    int64         // number of ticks spent in idle state
+	Iowait  int64         // number of ticks spent in iowait state
+	Swap    int64         // number of ticks spent in swap state
+	Nice    int64         // number of ticks spent in nice state
+	Total   int64         // total number of ticks spent
+	Systime time.Duration // time since the last call to this API
 }
 
 // GetCpuPercents extracts the current CPU info from the system as percentages, see sg_get_cpu_percents(3).
@@ -139,7 +139,7 @@ func asDiskIoStatsArray(d *C.sg_disk_io_stats, ct int) []*DiskIoStats {
 			C.GoString(cc.disk_name),
 			uint64(cc.read_bytes),
 			uint64(cc.write_bytes),
-			time.Unix(int64(cc.systime), 0)}
+			time.Duration(time.Duration(cc.systime) * time.Second)}
 	}
 	return r
 }
@@ -148,7 +148,7 @@ type DiskIoStats struct {
 	DiskName   string
 	ReadBytes  uint64
 	WriteBytes uint64
-	Systime    time.Time
+	Systime    time.Duration // time since the last call to this API
 }
 
 // GetMemStats returns capacity and usage information about system memory, see sg_get_mem_stats(3).
@@ -386,7 +386,7 @@ func asNetworkIoStatsArray(d *C.sg_network_io_stats, ct int) []*NetworkIoStats {
 			uint64(cc.ierrors),
 			uint64(cc.oerrors),
 			uint64(cc.collisions),
-			time.Unix(int64(cc.systime), 0)}
+			time.Duration(time.Duration(cc.systime) * time.Second)}
 	}
 	return r
 }
@@ -400,7 +400,7 @@ type NetworkIoStats struct {
 	ReadErrors    uint64
 	WriteErrors   uint64
 	Collisions    uint64
-	Systime       time.Time
+	Systime       time.Duration // time since the last call to this API
 }
 
 //TODO sg_get_load_stats
@@ -409,4 +409,3 @@ type NetworkIoStats struct {
 //TODO sg_get_network_iface_stats
 
 //TODO: thread-safety by massive mutex
-
