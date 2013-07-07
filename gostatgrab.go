@@ -73,6 +73,24 @@ func GetCpuStats() (*CpuStats, error) {
 	// WARNING: modern unixes only; will horribly confuse your PDP.
 }
 
+// GetCpuStatsDiff is like GetCpuStats, but only returns ticks since the last call, see sg_get_cpu_stats_diff(3).
+func GetCpuStatsDiff() (*CpuStats, error) {
+	c := C.sg_get_cpu_stats_diff()
+	if c == nil {
+		return nil, getError()
+	}
+	return &CpuStats{
+		int64(c.user),
+		int64(c.kernel),
+		int64(c.idle),
+		int64(c.iowait),
+		int64(c.swap),
+		int64(c.nice),
+		int64(c.total),
+		time.Duration(time.Duration(c.systime) * time.Second)}, nil
+	// WARNING: modern unixes only; will horribly confuse your PDP.
+}
+
 type CpuStats struct {
 	User    int64         // number of ticks spent in user state
 	Kernel  int64         // number of ticks spent in kernel state
