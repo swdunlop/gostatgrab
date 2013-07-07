@@ -1,7 +1,9 @@
 gostatgrab
 ==========
 
-Gostatgrab is a Go wrapper for the libstatgrab from the i-scream group.  It closely reproduces the API provided by libstatgrab, providing CPU usage, VM usage, disk statistics, process information, network information and other resource information across a wide range of UNIX platforms.  (But, like many current projects, we really only expect it will run on Linux.)
+Gostatgrab is a Go wrapper for the [statgrab]() library from the i-scream group.  It closely reproduces the API provided by libstatgrab, providing CPU usage, VM usage, disk statistics, process information, network information and other resource information across a wide range of UNIX platforms.  (But, like many current projects, we really only expect it will run on Linux.)
+
+[statgrab]: https://github.com/i-scream/libstatgrab
 
 ## License
 
